@@ -21,28 +21,28 @@ const AUTOPREFIXER_BROWSERS = [
     'bb >= 10',
 ];
 
-gulp.task('sync',function(){
+gulp.task('sync', function () {
     browserSync.init({
-        server:{
-            baseDir:'./',
+        server: {
+            baseDir: './',
         },
-        ghostMode:false
+        ghostMode: false
     });
-    gulp.watch(["**/*.html","**/*.js","**/*.css"]).on('change',browserSync.reload);
+    gulp.watch(["**/*.html", "**/*.js", "**/*.css"]).on('change', browserSync.reload);
 });
 
-gulp.task('sass',function(){
-    let sassInit = function(){
+gulp.task('sass', function () {
+    let sassInit = function () {
         return gulp.src('src/scss/*.scss')
-        .pipe(sass().on('error',sass.logError))
-        .pipe(gulp.dest('app/css'));
+            .pipe(sass().on('error', sass.logError))
+            .pipe(gulp.dest('app/css'));
     }
-    gulp.watch('src/scss/*.scss',sassInit);
+    gulp.watch('src/scss/*.scss', sassInit);
 });
 
 gulp.task('minify', function () {
-    let minifyInit = function(){
-        return gulp.src(["app/css/*.css","!app/css/*.min.css"])
+    let minifyInit = function () {
+        return gulp.src(["app/css/*.css", "!app/css/*.min.css"])
             .pipe(cleanCSS())
             .pipe(rename(
                 {
@@ -54,46 +54,44 @@ gulp.task('minify', function () {
     gulp.watch("app/css/*.css").on('change', minifyInit);
 });
 
-gulp.task('prefixer',function(){
-    let prefixerInit = function(){
+gulp.task('prefixer', function () {
+    let prefixerInit = function () {
         return gulp.src(['app/css/*.css', "!app/css/*.min.css"])
-        .pipe(autoprefixer({
-            browsers:AUTOPREFIXER_BROWSERS,
-            cascade:false
-        }))
-        .pipe(gulp.dest('app/css'));
+            .pipe(autoprefixer({
+                browsers: AUTOPREFIXER_BROWSERS,
+                cascade: false
+            }))
+            .pipe(gulp.dest('app/css'));
     };
     gulp.watch("app/css/*.css").on('change', prefixerInit);
 });
 
-gulp.task('babel',function(){
-    let babelInit = function(){
+gulp.task('babel', function () {
+    let babelInit = function () {
         return gulp.src("src/js/*.js")
             .pipe(plumber())
-            .pipe(babel({ presets: ['@babel/env']}))
+            .pipe(babel({ presets: ['@babel/env'] }))
+            .pipe(gulp.dest('app/js'));
+    }
+    gulp.watch("src/js/*.js").on('change', babelInit);
+});
+
+gulp.task('uglify', function () {
+    let uglifyInit = function () {
+        return gulp.src(["app/js/*.js", "!app/js/*.min.js"])
+            .pipe(uglify())
             .pipe(rename({
-                suffix: '.babel',
+                suffix: '.min',
             }))
             .pipe(gulp.dest('app/js'));
     }
-    gulp.watch("src/js/*.js").on('change',babelInit); 
+    gulp.watch(["app/js/*.js", "!app/js/*.min.js"]).on('change', uglifyInit);
 });
 
-gulp.task('uglify',function(){
-    let uglifyInit = function(){
-        return gulp.src(["app/js/*.js","!app/js/*.min.js"]) 
-        .pipe(uglify())
-        .pipe(rename({
-            suffix: '.min',
-        }))
-        .pipe(gulp.dest('app/js'));
-    }
-});
-
-gulp.task('scripts',gulp.parallel('babel','uglify'));
+gulp.task('scripts', gulp.parallel('babel', 'uglify'));
 
 gulp.task('styles',
     gulp.series('sass',
-                'prefixer'));
+        'prefixer'));
 
-gulp.task('default',gulp.parallel('sync','styles','minify','scripts'));
+gulp.task('default', gulp.parallel('sync', 'styles', 'minify', 'prefixer', 'scripts'));
